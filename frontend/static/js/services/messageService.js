@@ -60,6 +60,13 @@ class MessageService {
         if (numeroTo) {
             params.to = `whatsapp:${numeroTo}`;
         }
+
+        // Número from o to
+        const numeroFromTo = formData.get('numero_from_to');
+        if (numeroFromTo) {
+            params.from_to = `whatsapp:${numeroFromTo}`;
+            
+        }
         
         // SID
         const sid = formData.get('sid');

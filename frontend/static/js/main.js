@@ -40,6 +40,7 @@ class TwilioMonitorApp {
      */
     async search() {
         // Actualizar configuración
+        console.log("Iniciando búsqueda de mensajes...");
         const messagesPerPage = this.formHandler.getMessagesPerPage();
         this.messageService.setMessagesPerPage(messagesPerPage);
         this.messageService.setPage(1);
@@ -81,6 +82,7 @@ class TwilioMonitorApp {
             const searchParams = this.messageService.buildSearchParams(
                 this.formHandler.form
             );
+            console.log("Cargando página con parámetros:", searchParams);
             
             // Buscar mensajes
             const response = await this.messageService.searchMessages(searchParams);
