@@ -60,36 +60,77 @@ class MessageService {
             params.fecha_final = fechaFinal;
         }
         
-        // Número from
+        // Obtener valores de filtros manuales
         const numeroFrom = formData.get('numero_from');
-        if (numeroFrom) {
-            params.from = normalizeNumber(numeroFrom);
-        }
-        
-        // Número to
         const numeroTo = formData.get('numero_to');
-        if (numeroTo) {
-            params.to = normalizeNumber(numeroTo);
-        }
-
-        // Número from o to
         const numeroFromTo = formData.get('numero_from_to');
-        if (numeroFromTo) {
-            params.from_to = normalizeNumber(numeroFromTo);
-        }
         
         // SID
         const sid = formData.get('sid');
         if (sid) {
             params.sid = sid;
+            return params; // Si hay SID, ignorar otros filtros
         }
         
-        // FILTRO AUTOMÁTICO POR SERVICIO SELECCIONADO
-        // Si hay un servicio seleccionado y NO hay filtros manuales de números,
-        // filtrar automáticamente por el número del servicio (mensajes enviados O recibidos)
-        if (selectedService && !numeroFrom && !numeroTo && !numeroFromTo) {
-            // El número del servicio ya viene con el prefijo whatsapp: desde el backend
-            params.from_to = selectedService.phone_number;
+        // LÓGICA DE FILTRADO INTELIGENTE CON SERVICIO SELECCIONADO
+        if (selectedService) {
+            const serviceNumber = selectedService.phone_number;
+            
+            // CASO 1: Filtro manual "De o Para" + Servicio seleccionado
+            // Queremos: Conversaciones entre el SERVICIO y el USUARIO específico
+            if (numeroFromTo) {
+                const userNumber = normalizeNumber(numeroFromTo);
+                // Marcar para búsqueda especial (dos búsquedas en paralelo)
+                params.service_user_conversation = true;
+                params.service_number = serviceNumber;
+                params.user_number = userNumber;
+                return params;
+            }
+            
+            // CASO 2: Filtro manual "De" + Servicio seleccionado
+            if (numeroFrom) {
+                const fromNumber = normalizeNumber(numeroFrom);
+                // Si el "De" es el servicio, buscar mensajes DEL servicio
+                // Si es otro número, buscar mensajes de ese número HACIA el servicio
+                if (fromNumber === serviceNumber) {
+                    params.from = serviceNumber;
+                } else {
+                    params.from = fromNumber;
+                    params.to = serviceNumber;
+                }
+                return params;
+            }
+            
+            // CASO 3: Filtro manual "Para" + Servicio seleccionado
+            if (numeroTo) {
+                const toNumber = normalizeNumber(numeroTo);
+                // Si el "Para" es el servicio, buscar mensajes HACIA el servicio
+                // Si es otro número, buscar mensajes del servicio hacia ese número
+                if (toNumber === serviceNumber) {
+                    params.to = serviceNumber;
+                } else {
+                    params.from = serviceNumber;
+                    params.to = toNumber;
+                }
+                return params;
+            }
+            
+            // CASO 4: Solo servicio seleccionado, sin filtros manuales
+            params.from_to = serviceNumber;
+            return params;
+        }
+        
+        // Sin servicio seleccionado, usar filtros normales
+        if (numeroFrom) {
+            params.from = normalizeNumber(numeroFrom);
+        }
+        
+        if (numeroTo) {
+            params.to = normalizeNumber(numeroTo);
+        }
+        
+        if (numeroFromTo) {
+            params.from_to = normalizeNumber(numeroFromTo);
         }
         
         return params;

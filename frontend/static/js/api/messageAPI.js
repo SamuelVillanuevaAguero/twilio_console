@@ -9,6 +9,11 @@ class MessageAPI {
      */
     static async fetchMessages(params) {
         try {
+            // CASO ESPECIAL: Conversación entre servicio y usuario específico
+            if (params.service_user_conversation) {
+                return await this._fetchServiceUserConversation(params);
+            }
+            
             // Si existe from_to, hacer dos peticiones en paralelo
             if (params.from_to) {
                 const from_to = params.from_to;
@@ -33,6 +38,35 @@ class MessageAPI {
             console.error("Error al cargar mensajes:", error);
             throw error;
         }
+    }
+    
+    /**
+     * Obtiene conversación entre un servicio específico y un usuario específico
+     * @param {Object} params - Parámetros con service_number y user_number
+     * @returns {Promise<Object>} Respuesta combinada
+     */
+    static async _fetchServiceUserConversation(params) {
+        const serviceNumber = params.service_number;
+        const userNumber = params.user_number;
+        
+        // Crear parámetros base sin los campos especiales
+        const baseParams = { ...params };
+        delete baseParams.service_user_conversation;
+        delete baseParams.service_number;
+        delete baseParams.user_number;
+        
+        console.log(`Buscando conversación entre servicio ${serviceNumber} y usuario ${userNumber}`);
+        
+        // Hacer dos búsquedas en paralelo:
+        // 1. Mensajes DEL servicio HACIA el usuario
+        // 2. Mensajes DEL usuario HACIA el servicio
+        const [responseServiceToUser, responseUserToService] = await Promise.all([
+            this._fetchWithParams({ ...baseParams, from: serviceNumber, to: userNumber }),
+            this._fetchWithParams({ ...baseParams, from: userNumber, to: serviceNumber })
+        ]);
+        
+        // Combinar resultados
+        return this._mergeResults(responseServiceToUser, responseUserToService);
     }
 
     /**

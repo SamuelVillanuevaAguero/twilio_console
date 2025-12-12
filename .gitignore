@@ -57,3 +57,5 @@ start.sh
 test_static_manual.py
 run_working.py
 tests
+Procfile
+render.yaml
