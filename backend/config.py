@@ -11,7 +11,8 @@ class Config:
     """Clase de configuración de la aplicación"""
     
     # Flask
-    FLASK_PORT = int(os.getenv('FLASK_PORT', 5000))
+    # PORT es la variable que Render usa automáticamente
+    FLASK_PORT = int(os.getenv('PORT', os.getenv('FLASK_PORT', 5000)))
     FLASK_DEBUG = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
     

@@ -1,6 +1,28 @@
 services:
   - type: web
-    name: flask-app
+    name: twilio-monitor
     env: python
+    region: oregon
+    plan: free
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python run_debug.py"
+    
+    # Usando run_debug.py como punto de arranque
+    # OPCIÓN 1: Con gunicorn (RECOMENDADO para producción)
+    startCommand: "gunicorn run_debug:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --access-logfile - --error-logfile -"
+    
+    # OPCIÓN 2: Directamente con Python (si gunicorn da problemas)
+    # startCommand: "python run_debug.py"
+    
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: FLASK_DEBUG
+        value: False
+      - key: SECRET_KEY
+        generateValue: true
+      - key: SESSION_TYPE
+        value: filesystem
+      - key: PERMANENT_SESSION_LIFETIME
+        value: 3600
+      - key: RENDER
+        value: true

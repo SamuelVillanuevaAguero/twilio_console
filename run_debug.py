@@ -1,5 +1,6 @@
 """
 Script de inicio con diagnóstico detallado
+Funciona tanto en desarrollo local como en producción (Render)
 """
 from flask import Flask, jsonify, send_from_directory, Response
 from pathlib import Path
@@ -25,9 +26,18 @@ BASE_DIR = Path(__file__).parent.absolute()
 FRONTEND_DIR = BASE_DIR / 'frontend'
 STATIC_DIR = FRONTEND_DIR / 'static'
 
-print("\n" + "="*60)
-print("🔍 DIAGNÓSTICO DE RUTAS")
-print("="*60)
+# Determinar si estamos en producción o desarrollo
+IS_PRODUCTION = os.getenv('RENDER', False) or os.getenv('PORT', False)
+
+if IS_PRODUCTION:
+    print("\n" + "="*60)
+    print("🚀 MODO PRODUCCIÓN - RENDER")
+    print("="*60)
+else:
+    print("\n" + "="*60)
+    print("🔍 DIAGNÓSTICO DE RUTAS - MODO DESARROLLO")
+    print("="*60)
+
 print(f"📂 BASE_DIR: {BASE_DIR}")
 print(f"   Existe: {BASE_DIR.exists()}")
 print(f"\n📂 FRONTEND_DIR: {FRONTEND_DIR}")
@@ -35,7 +45,7 @@ print(f"   Existe: {FRONTEND_DIR.exists()}")
 print(f"\n📂 STATIC_DIR: {STATIC_DIR}")
 print(f"   Existe: {STATIC_DIR.exists()}")
 
-if STATIC_DIR.exists():
+if STATIC_DIR.exists() and not IS_PRODUCTION:
     print(f"\n📁 Contenido de STATIC_DIR:")
     for item in STATIC_DIR.rglob('*'):
         if item.is_file():
@@ -63,7 +73,9 @@ def index():
         return redirect('/login')
     
     html_path = FRONTEND_DIR / 'index.html'
-    print(f"📄 Sirviendo index.html desde: {html_path}")
+    
+    if not IS_PRODUCTION:
+        print(f"📄 Sirviendo index.html desde: {html_path}")
     
     if not html_path.exists():
         return f"❌ Error: HTML no encontrado en {html_path}", 404
@@ -83,7 +95,9 @@ def login():
         return redirect('/')
     
     html_path = FRONTEND_DIR / 'login.html'
-    print(f"📄 Sirviendo login.html desde: {html_path}")
+    
+    if not IS_PRODUCTION:
+        print(f"📄 Sirviendo login.html desde: {html_path}")
     
     if not html_path.exists():
         return f"❌ Error: Login HTML no encontrado en {html_path}", 404
@@ -99,13 +113,15 @@ def static_files(filename):
     """Sirve archivos estáticos con logging detallado"""
     file_path = STATIC_DIR / filename
     
-    print(f"\n🔍 Solicitud de archivo estático:")
-    print(f"   Filename solicitado: {filename}")
-    print(f"   Ruta completa: {file_path}")
-    print(f"   Existe: {file_path.exists()}")
+    if not IS_PRODUCTION:
+        print(f"\n🔍 Solicitud de archivo estático:")
+        print(f"   Filename solicitado: {filename}")
+        print(f"   Ruta completa: {file_path}")
+        print(f"   Existe: {file_path.exists()}")
     
     if not file_path.exists():
-        print(f"   ❌ Archivo NO encontrado")
+        if not IS_PRODUCTION:
+            print(f"   ❌ Archivo NO encontrado")
         return f"❌ Archivo no encontrado: {filename}", 404
     
     # Determinar mimetype
@@ -116,8 +132,15 @@ def static_files(filename):
         mimetype = 'application/javascript'
     elif filename.endswith('.json'):
         mimetype = 'application/json'
+    elif filename.endswith('.png'):
+        mimetype = 'image/png'
+    elif filename.endswith('.jpg') or filename.endswith('.jpeg'):
+        mimetype = 'image/jpeg'
+    elif filename.endswith('.svg'):
+        mimetype = 'image/svg+xml'
     
-    print(f"   ✅ Sirviendo archivo (mimetype: {mimetype})")
+    if not IS_PRODUCTION:
+        print(f"   ✅ Sirviendo archivo (mimetype: {mimetype})")
     
     return send_from_directory(
         str(STATIC_DIR), 
@@ -136,6 +159,7 @@ def health():
     
     return jsonify({
         "status": "ok",
+        "environment": "production" if IS_PRODUCTION else "development",
         "cache_size": cache_service.size(),
         "authenticated": 'account_sid' in session,
         "paths": {
@@ -146,34 +170,45 @@ def health():
             "css_exists": css_path.exists(),
             "js_exists": js_path.exists(),
         },
-        "test_urls": {
-            "css": f"http://127.0.0.1:{Config.FLASK_PORT}/static/css/style.css",
-            "js": f"http://127.0.0.1:{Config.FLASK_PORT}/static/js/main.js",
+        "config": {
+            "port": Config.FLASK_PORT,
+            "debug": Config.FLASK_DEBUG,
         }
     })
 
 
 @app.after_request
 def after_request(response):
-    """Log todas las respuestas"""
-    print(f"📤 Respuesta: {response.status}")
+    """Log todas las respuestas (solo en desarrollo)"""
+    if not IS_PRODUCTION:
+        print(f"📤 Respuesta: {response.status}")
     return response
 
 
 if __name__ == "__main__":
+    port = Config.FLASK_PORT
+    debug = Config.FLASK_DEBUG
+    
     print("\n🚀 Iniciando Twilio Monitor...")
-    print(f"🌐 Servidor: http://127.0.0.1:{Config.FLASK_PORT}")
-    print(f"🔧 Debug: {Config.FLASK_DEBUG}")
-    print("\n💡 URLs de prueba:")
-    print(f"   • Página: http://127.0.0.1:{Config.FLASK_PORT}/")
-    print(f"   • Health: http://127.0.0.1:{Config.FLASK_PORT}/health")
-    print(f"   • CSS: http://127.0.0.1:{Config.FLASK_PORT}/static/css/style.css")
-    print(f"   • JS: http://127.0.0.1:{Config.FLASK_PORT}/static/js/main.js")
+    print(f"🌐 Servidor: http://0.0.0.0:{port}")
+    print(f"🔧 Debug: {debug}")
+    print(f"🏭 Entorno: {'PRODUCCIÓN' if IS_PRODUCTION else 'DESARROLLO'}")
+    
+    if not IS_PRODUCTION:
+        print("\n💡 URLs de prueba:")
+        print(f"   • Página: http://127.0.0.1:{port}/")
+        print(f"   • Login: http://127.0.0.1:{port}/login")
+        print(f"   • Health: http://127.0.0.1:{port}/health")
+        print(f"   • CSS: http://127.0.0.1:{port}/static/css/style.css")
+        print(f"   • JS: http://127.0.0.1:{port}/static/js/main.js")
+    
     print("\n" + "="*60 + "\n")
     
+    # En producción, usar 0.0.0.0 para que Render pueda acceder
+    # En desarrollo, puede usar 127.0.0.1 o 0.0.0.0
     app.run(
-        host='127.0.0.1',
-        port=Config.FLASK_PORT,
-        debug=Config.FLASK_DEBUG,
+        host='0.0.0.0',
+        port=port,
+        debug=debug,
         use_reloader=False  # Evitar doble ejecución en debug
     )
