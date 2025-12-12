@@ -6,7 +6,6 @@ import DateFormatter from './dateFormatter.js';
 class CSVExporter {
     /**
      * Exporta la tabla actual a CSV
-     * @param {string} tableId - ID de la tabla
      */
     static exportTable(tableId) {
         const table = document.getElementById(tableId);
@@ -39,7 +38,6 @@ class CSVExporter {
     
     /**
      * Descarga el CSV
-     * @param {string} csvContent - Contenido del CSV
      */
     static _downloadCSV(csvContent) {
         const blob = new Blob([csvContent], { type: 'text/csv' });

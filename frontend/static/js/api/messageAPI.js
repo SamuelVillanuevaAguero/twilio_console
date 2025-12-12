@@ -5,14 +5,6 @@ class MessageAPI {
     /**
      * Obtiene mensajes con filtros y paginación
      * @param {Object} params - Parámetros de consulta
-     * @param {number} params.page - Número de página
-     * @param {number} params.per_page - Mensajes por página
-     * @param {string} [params.fecha_inicio] - Fecha de inicio
-     * @param {string} [params.fecha_final] - Fecha final
-     * @param {string} [params.from] - Número from
-     * @param {string} [params.to] - Número to
-     * @param {string} [params.from_to] - Número para buscar en from y to simultáneamente
-     * @param {string} [params.sid] - Message SID
      * @returns {Promise<Object>} Respuesta del servidor
      */
     static async fetchMessages(params) {
@@ -76,7 +68,7 @@ class MessageAPI {
      */
     static _mergeResults(responseFrom, responseTo) {
         // Combinar los mensajes de ambas respuestas, eliminando duplicados por SID
-        const allMessages = [...(responseFrom.mensajes || responseFrom.data || []), ...(responseTo.mensajes || responseTo.data || [])];
+        const allMessages = [...(responseFrom.mensajes || []), ...(responseTo.mensajes || [])];
         const uniqueMessages = [];
         const seenSids = new Set();
         
@@ -87,7 +79,7 @@ class MessageAPI {
             }
         }
         
-        // Ordenar por fecha (más recientes primero). Maneja valores faltantes.
+        // Ordenar por fecha (más recientes primero)
         uniqueMessages.sort((a, b) => {
             const da = a && a.date_sent ? new Date(a.date_sent) : new Date(0);
             const db = b && b.date_sent ? new Date(b.date_sent) : new Date(0);

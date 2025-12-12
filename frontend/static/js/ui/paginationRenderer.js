@@ -10,9 +10,6 @@ class PaginationRenderer {
     
     /**
      * Renderiza el paginador
-     * @param {number} currentPage - Página actual
-     * @param {number} totalPages - Total de páginas
-     * @param {boolean} hasMore - Si hay más páginas
      */
     render(currentPage, totalPages, hasMore) {
         this.pagination.innerHTML = "";
@@ -33,7 +30,6 @@ class PaginationRenderer {
     
     /**
      * Renderiza información de resultados
-     * @param {Object} data - Datos de la respuesta
      */
     renderInfo(data) {
         if (data.total === 0) {
@@ -52,10 +48,6 @@ class PaginationRenderer {
         `;
     }
     
-    /**
-     * Renderiza el botón anterior
-     * @param {number} currentPage - Página actual
-     */
     _renderPreviousButton(currentPage) {
         const li = document.createElement("li");
         li.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
@@ -75,12 +67,6 @@ class PaginationRenderer {
         this.pagination.appendChild(li);
     }
     
-    /**
-     * Renderiza el botón siguiente
-     * @param {number} currentPage - Página actual
-     * @param {number} totalPages - Total de páginas
-     * @param {boolean} hasMore - Si hay más páginas
-     */
     _renderNextButton(currentPage, totalPages, hasMore) {
         const isDisabled = !hasMore && currentPage >= totalPages;
         
@@ -102,48 +88,32 @@ class PaginationRenderer {
         this.pagination.appendChild(li);
     }
     
-    /**
-     * Renderiza los números de página
-     * @param {number} currentPage - Página actual
-     * @param {number} totalPages - Total de páginas
-     * @param {boolean} hasMore - Si hay más páginas
-     */
     _renderPageNumbers(currentPage, totalPages, hasMore) {
         const range = 2;
         const start = Math.max(1, currentPage - range);
         const end = Math.min(totalPages, currentPage + range);
         
-        // Primera página si no está en el rango
         if (start > 1) {
             this._renderPageButton(1, currentPage);
-            
             if (start > 2) {
                 this._renderEllipsis();
             }
         }
         
-        // Páginas del rango
         for (let i = start; i <= end; i++) {
             this._renderPageButton(i, currentPage);
         }
         
-        // Última página si no está en el rango
         if (end < totalPages || hasMore) {
             if (end < totalPages - 1) {
                 this._renderEllipsis();
             }
-            
             if (!hasMore && end < totalPages) {
                 this._renderPageButton(totalPages, currentPage);
             }
         }
     }
     
-    /**
-     * Renderiza un botón de página
-     * @param {number} pageNumber - Número de página
-     * @param {number} currentPage - Página actual
-     */
     _renderPageButton(pageNumber, currentPage) {
         const li = document.createElement("li");
         li.className = `page-item ${pageNumber === currentPage ? 'active' : ''}`;
@@ -161,9 +131,6 @@ class PaginationRenderer {
         this.pagination.appendChild(li);
     }
     
-    /**
-     * Renderiza puntos suspensivos
-     */
     _renderEllipsis() {
         const li = document.createElement("li");
         li.className = "page-item disabled";

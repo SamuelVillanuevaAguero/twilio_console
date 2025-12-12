@@ -13,13 +13,12 @@ from backend.config import Config
 from backend.services.twilio_service import TwilioService
 from backend.services.cache_service import CacheService
 from backend.routes.message_routes import MessageRoutes
-
-# Validar configuración
-Config.validate()
+from backend.routes.auth_routes import AuthRoutes
 
 # Crear aplicación
 app = Flask(__name__, static_folder=None)  # Deshabilitamos la carpeta static por defecto
 app.config.from_object(Config)
+app.secret_key = Config.SECRET_KEY
 
 # Directorios - Rutas absolutas
 BASE_DIR = Path(__file__).parent.absolute()
@@ -45,23 +44,24 @@ if STATIC_DIR.exists():
 print("="*60 + "\n")
 
 # Inicializar servicios
-twilio_service = TwilioService(
-    account_sid=Config.TWILIO_ACCOUNT_SID,
-    auth_token=Config.TWILIO_AUTH_TOKEN,
-    timezone_offset_hours=Config.TIMEZONE_OFFSET_HOURS,
-    page_size=Config.TWILIO_PAGE_SIZE
-)
-
 cache_service = CacheService(ttl_seconds=Config.CACHE_TTL_SECONDS)
 
-# Registrar rutas de mensajes
-message_routes = MessageRoutes(twilio_service, cache_service)
+# Registrar rutas
+auth_routes = AuthRoutes()
+app.register_blueprint(auth_routes.blueprint)
+
+message_routes = MessageRoutes(cache_service)
 app.register_blueprint(message_routes.blueprint)
 
 
 @app.route("/")
 def index():
     """Sirve el HTML principal"""
+    from flask import session, redirect
+    
+    if 'account_sid' not in session:
+        return redirect('/login')
+    
     html_path = FRONTEND_DIR / 'index.html'
     print(f"📄 Sirviendo index.html desde: {html_path}")
     
@@ -71,7 +71,26 @@ def index():
     with open(html_path, 'r', encoding='utf-8') as file:
         html = file.read()
     
-    html = html.replace('{{NUMERO_TWILIO}}', Config.TWILIO_PHONE_NUMBER)
+    return Response(html, mimetype='text/html')
+
+
+@app.route("/login")
+def login():
+    """Sirve el HTML de login"""
+    from flask import session, redirect
+    
+    if 'account_sid' in session:
+        return redirect('/')
+    
+    html_path = FRONTEND_DIR / 'login.html'
+    print(f"📄 Sirviendo login.html desde: {html_path}")
+    
+    if not html_path.exists():
+        return f"❌ Error: Login HTML no encontrado en {html_path}", 404
+    
+    with open(html_path, 'r', encoding='utf-8') as file:
+        html = file.read()
+    
     return Response(html, mimetype='text/html')
 
 
@@ -110,12 +129,15 @@ def static_files(filename):
 @app.route("/health")
 def health():
     """Endpoint de diagnóstico"""
+    from flask import session
+    
     css_path = STATIC_DIR / 'css' / 'style.css'
     js_path = STATIC_DIR / 'js' / 'main.js'
     
     return jsonify({
         "status": "ok",
         "cache_size": cache_service.size(),
+        "authenticated": 'account_sid' in session,
         "paths": {
             "base_dir": str(BASE_DIR),
             "frontend_dir": str(FRONTEND_DIR),
@@ -125,8 +147,8 @@ def health():
             "js_exists": js_path.exists(),
         },
         "test_urls": {
-            "css": "http://127.0.0.1:5000/static/css/style.css",
-            "js": "http://127.0.0.1:5000/static/js/main.js",
+            "css": f"http://127.0.0.1:{Config.FLASK_PORT}/static/css/style.css",
+            "js": f"http://127.0.0.1:{Config.FLASK_PORT}/static/js/main.js",
         }
     })
 

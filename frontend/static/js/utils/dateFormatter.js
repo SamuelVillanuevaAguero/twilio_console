@@ -4,8 +4,6 @@
 class DateFormatter {
     /**
      * Formatea una fecha de mensaje para mostrar
-     * @param {string} dateString - Fecha en formato ISO
-     * @returns {Object} Objeto con fecha y hora formateadas
      */
     static formatMessageDate(dateString) {
         if (!dateString) {
@@ -25,7 +23,6 @@ class DateFormatter {
     
     /**
      * Obtiene la fecha actual en formato ISO para nombres de archivo
-     * @returns {string} Fecha en formato YYYY-MM-DD
      */
     static getCurrentDateISO() {
         return new Date().toISOString().split('T')[0];

@@ -4,9 +4,9 @@
 import DateFormatter from '../utils/dateFormatter.js';
 
 class TableRenderer {
-    constructor(tableId, botNumber) {
+    constructor(tableId, servicesService) {
         this.table = document.getElementById(tableId);
-        this.botNumber = botNumber;
+        this.servicesService = servicesService;
     }
     
     /**
@@ -103,15 +103,23 @@ class TableRenderer {
     }
     
     /**
-     * Determina el estilo del mensaje según el remitente
+     * Determina el estilo del mensaje según el remitente y servicio
      * @param {string} from - Número del remitente
      * @returns {Object} Clases CSS para la burbuja y alineación
      */
     _getMessageStyle(from) {
-        const isBot = from === this.botNumber;
+        const selectedService = this.servicesService.getSelectedService();
+        const isBot = selectedService && from === selectedService.phone_number;
+        
+        // Obtener índice del servicio para aplicar estilos específicos
+        const serviceIndex = selectedService 
+            ? this.servicesService.getServiceIndex(selectedService.phone_number)
+            : 0;
         
         return {
-            bubbleClass: isBot ? "bubble-bot" : "bubble-user",
+            bubbleClass: isBot 
+                ? `bubble-bot-service-${serviceIndex}` 
+                : `bubble-user-service-${serviceIndex}`,
             alignmentClass: isBot ? "align-right" : ""
         };
     }
@@ -127,7 +135,8 @@ class TableRenderer {
             "received": "status-received",
             "failed": "status-failed",
             "sent": "status-sent",
-            "queued": "status-queued"
+            "queued": "status-queued",
+            "delivered": "status-received"
         };
         
         return baseClass + (statusMap[status] || "status-queued");

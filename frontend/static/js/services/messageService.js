@@ -28,13 +28,24 @@ class MessageService {
     /**
      * Construye parámetros de búsqueda desde el formulario
      * @param {HTMLFormElement} form - Formulario con filtros
+     * @param {Object} selectedService - Servicio seleccionado
      * @returns {Object} Parámetros de búsqueda
      */
-    buildSearchParams(form) {
+    buildSearchParams(form, selectedService) {
         const formData = new FormData(form);
         const params = {
             page: this.currentPage,
             per_page: this.messagesPerPage
+        };
+        
+        // Función auxiliar para normalizar números (agregar whatsapp: si no lo tiene)
+        const normalizeNumber = (number) => {
+            if (!number) return number;
+            const trimmed = number.trim();
+            // Si ya tiene whatsapp:, retornarlo tal cual
+            if (trimmed.startsWith('whatsapp:')) return trimmed;
+            // Si no, agregarlo
+            return `whatsapp:${trimmed}`;
         };
         
         // Fecha inicio
@@ -52,26 +63,33 @@ class MessageService {
         // Número from
         const numeroFrom = formData.get('numero_from');
         if (numeroFrom) {
-            params.from = `whatsapp:${numeroFrom}`;
+            params.from = normalizeNumber(numeroFrom);
         }
         
         // Número to
         const numeroTo = formData.get('numero_to');
         if (numeroTo) {
-            params.to = `whatsapp:${numeroTo}`;
+            params.to = normalizeNumber(numeroTo);
         }
 
         // Número from o to
         const numeroFromTo = formData.get('numero_from_to');
         if (numeroFromTo) {
-            params.from_to = `whatsapp:${numeroFromTo}`;
-            
+            params.from_to = normalizeNumber(numeroFromTo);
         }
         
         // SID
         const sid = formData.get('sid');
         if (sid) {
             params.sid = sid;
+        }
+        
+        // FILTRO AUTOMÁTICO POR SERVICIO SELECCIONADO
+        // Si hay un servicio seleccionado y NO hay filtros manuales de números,
+        // filtrar automáticamente por el número del servicio (mensajes enviados O recibidos)
+        if (selectedService && !numeroFrom && !numeroTo && !numeroFromTo) {
+            // El número del servicio ya viene con el prefijo whatsapp: desde el backend
+            params.from_to = selectedService.phone_number;
         }
         
         return params;

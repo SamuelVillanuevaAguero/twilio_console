@@ -1,15 +1,15 @@
 """
 Punto de entrada de la aplicación Flask
 """
-from flask import Flask, jsonify, send_from_directory, Response
+from flask import Flask, jsonify, send_from_directory, Response, session, redirect, url_for
 import logging
 import os
 from pathlib import Path
 
 from .config import Config
-from .services.twilio_service import TwilioService
 from .services.cache_service import CacheService
 from .routes.message_routes import MessageRoutes
+from .routes.auth_routes import AuthRoutes
 
 
 def create_app() -> Flask:
@@ -19,53 +19,50 @@ def create_app() -> Flask:
     Returns:
         Instancia configurada de Flask
     """
-    # Validar configuración
-    Config.validate()
-    
     # Configurar logging
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     
-    # Obtener directorio base del proyecto (más robusto)
+    # Obtener directorio base del proyecto
     current_file = Path(__file__).resolve()
     backend_dir = current_file.parent
     base_dir = backend_dir.parent
     frontend_dir = base_dir / 'frontend'
     static_dir = frontend_dir / 'static'
     
-    # Log de rutas para debug
     logger = logging.getLogger(__name__)
     logger.info(f"Base directory: {base_dir}")
     logger.info(f"Frontend directory: {frontend_dir}")
     logger.info(f"Static directory: {static_dir}")
-    logger.info(f"Static directory exists: {static_dir.exists()}")
     
     # Crear aplicación
     app = Flask(__name__)
     app.config.from_object(Config)
     
-    # Inicializar servicios
-    twilio_service = TwilioService(
-        account_sid=Config.TWILIO_ACCOUNT_SID,
-        auth_token=Config.TWILIO_AUTH_TOKEN,
-        timezone_offset_hours=Config.TIMEZONE_OFFSET_HOURS,
-        page_size=Config.TWILIO_PAGE_SIZE
-    )
+    # Configurar sesiones
+    app.secret_key = Config.SECRET_KEY
     
+    # Inicializar servicios
     cache_service = CacheService(
         ttl_seconds=Config.CACHE_TTL_SECONDS
     )
     
     # Registrar rutas
-    message_routes = MessageRoutes(twilio_service, cache_service)
+    auth_routes = AuthRoutes()
+    app.register_blueprint(auth_routes.blueprint)
+    
+    message_routes = MessageRoutes(cache_service)
     app.register_blueprint(message_routes.blueprint)
     
-    # Ruta principal
+    # Ruta principal - redirige a login si no está autenticado
     @app.route("/")
     def index():
-        """Sirve el HTML principal"""
+        """Sirve el HTML principal o redirige a login"""
+        if 'account_sid' not in session:
+            return redirect('/login')
+        
         html_path = frontend_dir / 'index.html'
         logger.info(f"Loading HTML from: {html_path}")
         
@@ -75,7 +72,25 @@ def create_app() -> Flask:
         with open(html_path, 'r', encoding='utf-8') as file:
             html = file.read()
         
-        html = html.replace('{{NUMERO_TWILIO}}', Config.TWILIO_PHONE_NUMBER)
+        return html
+    
+    # Ruta de login
+    @app.route("/login")
+    def login_page():
+        """Sirve la página de login"""
+        # Si ya está autenticado, redirigir al index
+        if 'account_sid' in session:
+            return redirect('/')
+        
+        html_path = frontend_dir / 'login.html'
+        logger.info(f"Loading login HTML from: {html_path}")
+        
+        if not html_path.exists():
+            return f"Error: Login HTML file not found at {html_path}", 404
+        
+        with open(html_path, 'r', encoding='utf-8') as file:
+            html = file.read()
+        
         return html
     
     # Rutas para archivos estáticos
@@ -84,7 +99,6 @@ def create_app() -> Flask:
         """Sirve archivos estáticos"""
         file_path = static_dir / filename
         logger.info(f"Serving static file: {file_path}")
-        logger.info(f"File exists: {file_path.exists()}")
         
         if not file_path.exists():
             return f"File not found: {filename}", 404
@@ -98,6 +112,7 @@ def create_app() -> Flask:
         return jsonify({
             "status": "ok",
             "cache_size": cache_service.size(),
+            "authenticated": 'account_sid' in session,
             "paths": {
                 "base_dir": str(base_dir),
                 "frontend_dir": str(frontend_dir),

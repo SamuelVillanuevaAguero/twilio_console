@@ -1,7 +1,7 @@
 """
 Rutas HTTP para gestión de mensajes
 """
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from datetime import timedelta
 
 from ..models.message import MessageFilter
@@ -14,15 +14,13 @@ from ..config import Config
 class MessageRoutes:
     """Controlador de rutas para mensajes"""
     
-    def __init__(self, twilio_service: TwilioService, cache_service: CacheService):
+    def __init__(self, cache_service: CacheService):
         """
         Inicializa las rutas con las dependencias necesarias
         
         Args:
-            twilio_service: Servicio de Twilio
             cache_service: Servicio de caché
         """
-        self.twilio_service = twilio_service
         self.cache_service = cache_service
         self.blueprint = Blueprint('messages', __name__)
         self._register_routes()
@@ -34,6 +32,23 @@ class MessageRoutes:
             'get_messages',
             self.get_messages,
             methods=['GET']
+        )
+    
+    def _get_twilio_service(self):
+        """
+        Crea una instancia de TwilioService con las credenciales de sesión
+        
+        Returns:
+            TwilioService o None si no hay sesión activa
+        """
+        if 'account_sid' not in session or 'auth_token' not in session:
+            return None
+        
+        return TwilioService(
+            account_sid=session['account_sid'],
+            auth_token=session['auth_token'],
+            timezone_offset_hours=Config.TIMEZONE_OFFSET_HOURS,
+            page_size=Config.TWILIO_PAGE_SIZE
         )
     
     def get_messages(self):
@@ -48,15 +63,30 @@ class MessageRoutes:
             - from: Número de origen
             - to: Número de destino
             - sid: SID del mensaje
+            - service: Número del servicio (opcional)
             
         Returns:
             JSON con mensajes paginados
         """
+        # Verificar autenticación
+        twilio_service = self._get_twilio_service()
+        if not twilio_service:
+            return jsonify({
+                'error': 'No autenticado',
+                'mensajes': [],
+                'page': 1,
+                'per_page': 50,
+                'total': 0,
+                'total_pages': 0,
+                'has_more': False
+            }), 401
+        
         # Limpiar caché expirado periódicamente
         self.cache_service.clear_expired()
         
         # Verificar caché
         cache_key = dict(request.args)
+        cache_key['account_sid'] = session['account_sid']  # Incluir SID en caché
         cached_response = self.cache_service.get(cache_key)
         
         if cached_response:
@@ -74,7 +104,7 @@ class MessageRoutes:
         
         # Obtener mensajes
         try:
-            response = self.twilio_service.get_paginated_messages(
+            response = twilio_service.get_paginated_messages(
                 filters,
                 page,
                 per_page

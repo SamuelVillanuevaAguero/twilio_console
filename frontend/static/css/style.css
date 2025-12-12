@@ -78,8 +78,12 @@
     background: #f9fbff;
 }
 
-/* Mensaje del BOT */
-.bubble-bot {
+/* ============================================
+   ESTILOS DINÁMICOS POR SERVICIO
+   ============================================ */
+
+/* Servicio por defecto (Service 0) */
+.bubble-bot-service-0 {
     padding: 10px 14px;
     background: #eef3ff;
     border-left: 4px solid #4c8bf5;
@@ -88,12 +92,118 @@
     white-space: pre-wrap;
 }
 
-/* Mensaje del USUARIO */
-.bubble-user {
+.bubble-user-service-0 {
     padding: 10px 14px;
     background: #e7f9ed;
     border-right: 4px solid #2ecc71;
     border-radius: 12px;
     max-width: 420px;
     white-space: pre-wrap;
+}
+
+/* Servicio 1 - Tema Púrpura/Magenta */
+.bubble-bot-service-1 {
+    padding: 10px 14px;
+    background: #f3e5f5;
+    border-left: 4px solid #9c27b0;
+    border-radius: 12px;
+    max-width: 420px;
+    white-space: pre-wrap;
+}
+
+.bubble-user-service-1 {
+    padding: 10px 14px;
+    background: #fff3e0;
+    border-right: 4px solid #ff9800;
+    border-radius: 12px;
+    max-width: 420px;
+    white-space: pre-wrap;
+}
+
+/* Servicio 2 - Tema Teal/Cyan */
+.bubble-bot-service-2 {
+    padding: 10px 14px;
+    background: #e0f2f1;
+    border-left: 4px solid #009688;
+    border-radius: 12px;
+    max-width: 420px;
+    white-space: pre-wrap;
+}
+
+.bubble-user-service-2 {
+    padding: 10px 14px;
+    background: #fce4ec;
+    border-right: 4px solid #e91e63;
+    border-radius: 12px;
+    max-width: 420px;
+    white-space: pre-wrap;
+}
+
+/* Servicio 3 - Tema Naranja/Rojo */
+.bubble-bot-service-3 {
+    padding: 10px 14px;
+    background: #fff3e0;
+    border-left: 4px solid #ff5722;
+    border-radius: 12px;
+    max-width: 420px;
+    white-space: pre-wrap;
+}
+
+.bubble-user-service-3 {
+    padding: 10px 14px;
+    background: #e8eaf6;
+    border-right: 4px solid #3f51b5;
+    border-radius: 12px;
+    max-width: 420px;
+    white-space: pre-wrap;
+}
+
+/* Servicio 4 - Tema Índigo/Rosa */
+.bubble-bot-service-4 {
+    padding: 10px 14px;
+    background: #e8eaf6;
+    border-left: 4px solid #3f51b5;
+    border-radius: 12px;
+    max-width: 420px;
+    white-space: pre-wrap;
+}
+
+.bubble-user-service-4 {
+    padding: 10px 14px;
+    background: #f3e5f5;
+    border-right: 4px solid #9c27b0;
+    border-radius: 12px;
+    max-width: 420px;
+    white-space: pre-wrap;
+}
+
+/* Servicio 5 - Tema Marrón/Ámbar */
+.bubble-bot-service-5 {
+    padding: 10px 14px;
+    background: #efebe9;
+    border-left: 4px solid #795548;
+    border-radius: 12px;
+    max-width: 420px;
+    white-space: pre-wrap;
+}
+
+.bubble-user-service-5 {
+    padding: 10px 14px;
+    background: #fff8e1;
+    border-right: 4px solid #ffc107;
+    border-radius: 12px;
+    max-width: 420px;
+    white-space: pre-wrap;
+}
+
+/* Selector de servicio */
+.service-selector select {
+    border: 2px solid #4c8bf5;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.service-selector select:focus {
+    border-color: #2c5bd4;
+    box-shadow: 0 0 0 0.2rem rgba(76, 139, 245, 0.25);
 }
