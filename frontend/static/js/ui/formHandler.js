@@ -53,6 +53,7 @@ class FormHandler {
         document.getElementById("numero_from").value = "";
         document.getElementById("numero_to").value = "";
         document.getElementById("numero_from_to").value = "";
+        document.getElementById("body_search").value = ""; // Nuevo campo
         document.getElementById("cantidad").value = "50";
     }
     

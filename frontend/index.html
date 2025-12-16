@@ -13,36 +13,37 @@
 
 <body>
 
-    <div class="container py-4">
+    <div class="container-fluid px-2 px-md-4 py-3 py-md-4">
 
         <!-- Header con selector de servicio y logout -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div class="d-flex align-items-center">
-                <h2 class="mb-0 me-3">
+        <div class="header-container">
+            <div class="header-left">
+                <h2 class="app-title">
                     <i class="bi bi-chat-left-dots-fill text-primary"></i>
-                    Logs Twilio
+                    <span class="d-none d-md-inline">Logs Twilio</span>
+                    <span class="d-md-none">Logs</span>
                     <span id="loading-indicator" class="spinner-border spinner-border-sm ms-2 d-none" role="status">
                         <span class="visually-hidden">Cargando...</span>
                     </span>
                 </h2>
                 
                 <!-- Selector de servicio -->
-                <div class="service-selector" style="min-width: 250px;">
+                <div class="service-selector">
                     <select id="service-selector" class="form-select form-select-sm">
                         <option value="">Cargando servicios...</option>
                     </select>
                 </div>
             </div>
             
-            <div class="btn-group" role="group">
-                <button class="btn btn-outline-secondary btn-sm" onclick="limpiarFiltros()" title="Limpiar filtros">
-                    <i class="bi bi-x-circle"></i> Limpiar
+            <div class="btn-group btn-group-sm" role="group">
+                <button class="btn btn-outline-secondary" onclick="limpiarFiltros()" title="Limpiar filtros">
+                    <i class="bi bi-x-circle"></i> <span class="d-none d-md-inline">Limpiar</span>
                 </button>
-                <button class="btn btn-outline-primary btn-sm" onclick="exportarCSV()" title="Exportar página actual">
-                    <i class="bi bi-download"></i> Exportar
+                <button class="btn btn-outline-primary" onclick="exportarCSV()" title="Exportar página actual">
+                    <i class="bi bi-download"></i> <span class="d-none d-md-inline">Exportar</span>
                 </button>
-                <button class="btn btn-outline-danger btn-sm" onclick="cerrarSesion()" title="Cerrar sesión">
-                    <i class="bi bi-box-arrow-right"></i> Salir
+                <button class="btn btn-outline-danger" onclick="cerrarSesion()" title="Cerrar sesión">
+                    <i class="bi bi-box-arrow-right"></i> <span class="d-none d-md-inline">Salir</span>
                 </button>
             </div>
         </div>
@@ -53,55 +54,83 @@
             <strong id="service-info-name"></strong> - <span id="service-info-number"></span>
         </div>
 
+        <!-- Formulario de búsqueda -->
         <div class="card shadow-sm mb-3">
             <div class="card-body">
                 <form id="search-form">
-                    <div class="row g-3">
+                    <div class="row g-2 g-md-3">
 
-                        <div class="col-md-3">
+                        <!-- Búsqueda por contenido - DESTACADO -->
+                        <div class="col-12">
+                            <label class="form-label small text-muted fw-bold">
+                                <i class="bi bi-search"></i> Buscar en contenido del mensaje
+                            </label>
+                            <input type="text" id="body_search" name="body_search" 
+                                   class="form-control search-input"
+                                   placeholder="Buscar palabras o frases en los mensajes...">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i> 
+                                Esta búsqueda es case-insensitive y busca coincidencias parciales
+                            </small>
+                        </div>
+
+                        <!-- Message SID -->
+                        <div class="col-md-6 col-lg-3">
                             <label class="form-label small text-muted">Message SID</label>
-                            <input type="text" id="sid" name="sid" class="form-control search-input"
+                            <input type="text" id="sid" name="sid" class="form-control form-control-sm search-input"
                                 placeholder="Search by SID">
                         </div>
 
-                        <div class="col-md-3">
+                        <!-- Fecha Inicio -->
+                        <div class="col-md-6 col-lg-3">
                             <label class="form-label small text-muted">Fecha Inicio</label>
-                            <input type="datetime-local" id="fecha_inicio" name="fecha_inicio" class="form-control search-input">
+                            <input type="datetime-local" id="fecha_inicio" name="fecha_inicio" 
+                                   class="form-control form-control-sm search-input">
                         </div>
 
-                        <div class="col-md-3">
+                        <!-- Fecha Final -->
+                        <div class="col-md-6 col-lg-3">
                             <label class="form-label small text-muted">Fecha Final</label>
-                            <input type="datetime-local" id="fecha_final" name="fecha_final" class="form-control search-input">
+                            <input type="datetime-local" id="fecha_final" name="fecha_final" 
+                                   class="form-control form-control-sm search-input">
                         </div>
 
-                        <div class="col-md-3">
+                        <!-- Mensajes por página -->
+                        <div class="col-md-6 col-lg-3">
                             <label class="form-label small text-muted">Mensajes por página</label>
-                            <select id="cantidad" name="cantidad" class="form-control">
+                            <select id="cantidad" name="cantidad" class="form-control form-control-sm">
                                 <option value="30">30 mensajes</option>
                                 <option value="50" selected>50 mensajes</option>
                                 <option value="100">100 mensajes</option>
                             </select>
                         </div>
 
-                        <div class="col-md-4">
+                        <!-- De (Número) -->
+                        <div class="col-md-6 col-lg-4">
                             <label class="form-label small text-muted">De (Número)</label>
-                            <input type="text" id="numero_from" name="numero_from" class="form-control search-input" 
-                                placeholder="+5211234567890">
+                            <input type="text" id="numero_from" name="numero_from" 
+                                   class="form-control form-control-sm search-input" 
+                                   placeholder="+5211234567890">
                         </div>
 
-                        <div class="col-md-4">
+                        <!-- Para (Número) -->
+                        <div class="col-md-6 col-lg-4">
                             <label class="form-label small text-muted">Para (Número)</label>
-                            <input type="text" id="numero_to" name="numero_to" class="form-control search-input" 
-                                placeholder="+5211234567890">
+                            <input type="text" id="numero_to" name="numero_to" 
+                                   class="form-control form-control-sm search-input" 
+                                   placeholder="+5211234567890">
                         </div>
 
-                        <div class="col-md-4">
+                        <!-- De o Para (Número) -->
+                        <div class="col-md-6 col-lg-4">
                             <label class="form-label small text-muted">De o Para (Número)</label>
-                            <input type="text" id="numero_from_to" name="numero_from_to" class="form-control search-input" 
-                                placeholder="+5211234567890">
+                            <input type="text" id="numero_from_to" name="numero_from_to" 
+                                   class="form-control form-control-sm search-input" 
+                                   placeholder="+5211234567890">
                         </div>
 
-                        <div class="col-md-4 d-flex align-items-end">
+                        <!-- Botón de búsqueda -->
+                        <div class="col-12 d-flex align-items-end">
                             <button type="button" class="btn btn-primary w-100 filter-btn" onclick="buscar()">
                                 <i class="bi bi-funnel"></i> Buscar
                             </button>
@@ -119,24 +148,28 @@
             </div>
         </div>
 
+        <!-- Tabla de resultados -->
         <div class="table-responsive shadow-sm">
             <table class="table align-middle custom-table">
                 <thead>
                     <tr>
-                        <th style="width: 170px;">
-                            <i class="bi bi-calendar-event"></i> FECHA
+                        <th class="th-fecha">
+                            <i class="bi bi-calendar-event"></i> 
+                            <span class="d-none d-md-inline">FECHA</span>
+                            <span class="d-md-none">FECHA</span>
                         </th>
-                        <th>
+                        <th class="th-from">
                             <i class="bi bi-person-fill"></i> FROM
                         </th>
-                        <th>
+                        <th class="th-to">
                             <i class="bi bi-person-fill"></i> TO
                         </th>
-                        <th>
+                        <th class="th-body">
                             <i class="bi bi-chat-text"></i> BODY
                         </th>
-                        <th style="width: 120px;">
-                            <i class="bi bi-check-circle"></i> STATUS
+                        <th class="th-status">
+                            <i class="bi bi-check-circle"></i> 
+                            <span class="d-none d-md-inline">STATUS</span>
                         </th>
                     </tr>
                 </thead>
@@ -144,16 +177,19 @@
                 </tbody>
             </table>
             
+            <!-- Paginación -->
             <div class="d-flex justify-content-center mt-3">
                 <nav>
-                    <ul id="paginador" class="pagination"></ul>
+                    <ul id="paginador" class="pagination pagination-sm"></ul>
                 </nav>
             </div>
 
+            <!-- Info de resultados -->
             <div id="info-resultados" class="text-center mt-2"></div>
         </div>
 
-        <footer class="mt-4 text-center text-muted">
+        <!-- Footer -->
+        <footer class="mt-3 mt-md-4 text-center text-muted">
             <small>
                 <i class="bi bi-shield-check"></i> Monitor Twilio - <span id="account-name"></span>
             </small>

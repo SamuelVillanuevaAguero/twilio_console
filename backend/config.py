@@ -17,7 +17,7 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
     
     # Cache
-    CACHE_TTL_SECONDS = 300  # 5 minutos
+    CACHE_TTL_SECONDS = 20  # 20 segundos para monitor en 'tiempo real'
     
     # API
     MAX_MESSAGES_PER_PAGE = 100

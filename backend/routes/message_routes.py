@@ -63,6 +63,7 @@ class MessageRoutes:
             - from: Número de origen
             - to: Número de destino
             - sid: SID del mensaje
+            - body_search: Búsqueda por contenido del mensaje
             - service: Número del servicio (opcional)
             
         Returns:
@@ -148,5 +149,6 @@ class MessageRoutes:
             fecha_inicio=parse_datetime(args.get("fecha_inicio")),
             fecha_final=fecha_final,
             numero_from=args.get("from"),
-            numero_to=args.get("to")
+            numero_to=args.get("to"),
+            body_search=args.get("body_search")  # Nuevo parámetro
         )

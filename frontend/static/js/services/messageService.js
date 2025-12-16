@@ -60,6 +60,12 @@ class MessageService {
             params.fecha_final = fechaFinal;
         }
         
+        // Búsqueda por contenido (NUEVO)
+        const bodySearch = formData.get('body_search');
+        if (bodySearch && bodySearch.trim()) {
+            params.body_search = bodySearch.trim();
+        }
+        
         // Obtener valores de filtros manuales
         const numeroFrom = formData.get('numero_from');
         const numeroTo = formData.get('numero_to');

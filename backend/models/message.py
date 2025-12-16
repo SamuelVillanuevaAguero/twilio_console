@@ -67,6 +67,7 @@ class MessageFilter:
     fecha_final: Optional[datetime] = None
     numero_from: Optional[str] = None
     numero_to: Optional[str] = None
+    body_search: Optional[str] = None  # Nuevo campo para búsqueda por contenido
     
     def matches(self, message: Message) -> bool:
         """
@@ -97,6 +98,13 @@ class MessageFilter:
         if self.numero_to and message.to_number != self.numero_to:
             return False
         
+        # Filtro por contenido del mensaje (búsqueda case-insensitive)
+        if self.body_search and message.body:
+            if self.body_search.lower() not in message.body.lower():
+                return False
+        elif self.body_search and not message.body:
+            return False
+        
         return True
     
     def to_twilio_params(self) -> dict:
@@ -116,6 +124,7 @@ class MessageFilter:
             params['from_'] = self.numero_from
         if self.numero_to:
             params['to'] = self.numero_to
+        # Nota: body_search se filtra en memoria, no en la API de Twilio
         
         return params
 

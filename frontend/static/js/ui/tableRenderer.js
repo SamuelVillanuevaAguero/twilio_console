@@ -31,10 +31,15 @@ class TableRenderer {
      * Muestra mensaje de tabla vacía
      */
     _renderEmpty() {
+        const isMobile = window.innerWidth < 577;
+        const colspan = isMobile ? "3" : "5";
+        
         this.table.innerHTML = `
             <tr>
-                <td colspan="5" class="text-center text-muted py-4">
-                    No se encontraron mensajes
+                <td colspan="${colspan}" class="text-center text-muted py-4">
+                    <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                    <div class="mt-2">No se encontraron mensajes</div>
+                    <small class="text-muted">Intenta ajustar los filtros de búsqueda</small>
                 </td>
             </tr>
         `;
@@ -44,12 +49,16 @@ class TableRenderer {
      * Muestra indicador de carga
      */
     renderLoading() {
+        const isMobile = window.innerWidth < 577;
+        const colspan = isMobile ? "3" : "5";
+        
         this.table.innerHTML = `
             <tr>
-                <td colspan="5" class="text-center">
+                <td colspan="${colspan}" class="text-center py-4">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Cargando...</span>
                     </div>
+                    <div class="mt-2 text-muted">Cargando mensajes...</div>
                 </td>
             </tr>
         `;
@@ -60,10 +69,17 @@ class TableRenderer {
      * @param {string} errorMessage - Mensaje de error
      */
     renderError(errorMessage) {
+        const isMobile = window.innerWidth < 577;
+        const colspan = isMobile ? "3" : "5";
+        
         this.table.innerHTML = `
             <tr>
-                <td colspan="5" class="text-center text-danger">
-                    ${errorMessage || 'Error al cargar mensajes. Por favor, intenta nuevamente.'}
+                <td colspan="${colspan}" class="text-center text-danger py-4">
+                    <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
+                    <div class="mt-2">
+                        ${errorMessage || 'Error al cargar mensajes'}
+                    </div>
+                    <small class="text-muted">Por favor, intenta nuevamente</small>
                 </td>
             </tr>
         `;
@@ -82,24 +98,71 @@ class TableRenderer {
         
         const row = document.createElement('tr');
         row.className = alignmentClass;
-        row.innerHTML = `
-            <td>
-                <div class="date-block">
-                    <span class="date-main">${dateMain}</span>
-                    <span class="date-time">${dateTime}</span>
-                </div>
-            </td>
-            <td><span class="endpoint from-number">${message.from}</span></td>
-            <td><span class="endpoint to-number">${message.to}</span></td>
-            <td>
-                <div class="${bubbleClass}">${body}</div>
-            </td>
-            <td>
-                <span class="${statusClass}">${message.status}</span>
-            </td>
-        `;
+        
+        // Versión móvil vs desktop
+        const isMobile = window.innerWidth < 577;
+        
+        if (isMobile) {
+            // Versión móvil: solo fecha, body y status
+            row.innerHTML = `
+                <td>
+                    <div class="date-block">
+                        <span class="date-main">${dateMain}</span>
+                        <span class="date-time">${dateTime}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="${bubbleClass}">${body}</div>
+                    <small class="text-muted d-block mt-1">
+                        <i class="bi bi-arrow-right-circle"></i> ${this._truncateNumber(message.from)}
+                        →
+                        <i class="bi bi-arrow-left-circle"></i> ${this._truncateNumber(message.to)}
+                    </small>
+                </td>
+                <td>
+                    <span class="${statusClass}">${message.status}</span>
+                </td>
+            `;
+        } else {
+            // Versión desktop: todas las columnas
+            row.innerHTML = `
+                <td>
+                    <div class="date-block">
+                        <span class="date-main">${dateMain}</span>
+                        <span class="date-time">${dateTime}</span>
+                    </div>
+                </td>
+                <td><span class="endpoint from-number">${message.from}</span></td>
+                <td><span class="endpoint to-number">${message.to}</span></td>
+                <td>
+                    <div class="${bubbleClass}">${body}</div>
+                </td>
+                <td>
+                    <span class="${statusClass}">${message.status}</span>
+                </td>
+            `;
+        }
         
         return row;
+    }
+    
+    /**
+     * Trunca un número de teléfono para móviles
+     * @param {string} number - Número completo
+     * @returns {string} Número truncado
+     */
+    _truncateNumber(number) {
+        if (!number) return '';
+        
+        // Si tiene whatsapp:, quitarlo
+        let cleaned = number.replace('whatsapp:', '');
+        
+        // Si es muy largo, mostrar solo últimos 4 dígitos
+        if (cleaned.length > 10) {
+            return '...' + cleaned.slice(-4);
+        }
+        
+        return cleaned;
     }
     
     /**
