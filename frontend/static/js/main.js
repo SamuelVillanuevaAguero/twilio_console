@@ -5,6 +5,7 @@
 import MessageService from './services/messageService.js';
 import TableRenderer from './ui/tableRenderer.js';
 import PaginationRenderer from './ui/paginationRenderer.js';
+import StatsRenderer from './ui/statsRenderer.js';
 import FormHandler from './ui/formHandler.js';
 import CSVExporter from './utils/csvExporter.js';
 import AuthService from './services/authService.js';
@@ -23,6 +24,7 @@ class TwilioMonitorApp {
             'info-resultados',
             (page) => this.changePage(page)
         );
+        this.statsRenderer = new StatsRenderer('stats-container');
         this.formHandler = new FormHandler(
             'search-form',
             () => this.search(),
@@ -169,6 +171,7 @@ class TwilioMonitorApp {
         // Mostrar indicadores de carga
         this.formHandler.toggleLoadingIndicator(true);
         this.tableRenderer.renderLoading();
+        this.statsRenderer.clear();
         
         try {
             // Construir parámetros de búsqueda
@@ -194,6 +197,9 @@ class TwilioMonitorApp {
             );
             this.paginationRenderer.renderInfo(response);
             
+            // Renderizar estadísticas (NUEVO)
+            this.statsRenderer.render(response);
+            
         } catch (error) {
             console.error("Error al cargar página:", error);
             
@@ -204,6 +210,7 @@ class TwilioMonitorApp {
             }
             
             this.tableRenderer.renderError();
+            this.statsRenderer.clear();
             
         } finally {
             this.formHandler.toggleLoadingIndicator(false);

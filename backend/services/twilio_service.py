@@ -68,13 +68,17 @@ class TwilioService:
             message = self.get_message_by_sid(filters.sid)
             messages = [message] if message and filters.matches(message) else []
             
+            # Calcular usuarios únicos (excluir el servicio)
+            unique_users = self._count_unique_users(messages, filters)
+            
             return PaginatedResponse(
                 messages=messages,
                 page=1,
                 per_page=per_page,
                 total=len(messages),
                 total_pages=1,
-                has_more=False
+                has_more=False,
+                unique_users=unique_users
             )
         
         # Búsqueda paginada
@@ -102,6 +106,9 @@ class TwilioService:
         target_start = (page - 1) * per_page
         target_end = target_start + per_page
         
+        # Para contar usuarios únicos en toda la búsqueda
+        all_matching_messages = []
+        
         try:
             # Obtener parámetros para Twilio
             twilio_params = filters.to_twilio_params()
@@ -120,6 +127,9 @@ class TwilioService:
                 )
                 
                 if filters.matches(message):
+                    # Guardar todos los mensajes que coinciden para contar usuarios
+                    all_matching_messages.append(message)
+                    
                     if messages_processed >= target_start and len(results) < per_page:
                         results.append(message)
                     
@@ -128,6 +138,9 @@ class TwilioService:
                     # Optimización: salir si ya tenemos suficientes
                     if len(results) >= per_page and messages_processed > target_end:
                         break
+            
+            # Calcular usuarios únicos (excluir el servicio)
+            unique_users = self._count_unique_users(all_matching_messages, filters)
             
             # Calcular total de páginas (estimado)
             total_pages = max(
@@ -142,7 +155,8 @@ class TwilioService:
                 per_page=per_page,
                 total=messages_processed,
                 total_pages=total_pages,
-                has_more=has_more
+                has_more=has_more,
+                unique_users=unique_users
             )
             
         except Exception as e:
@@ -153,5 +167,55 @@ class TwilioService:
                 per_page=per_page,
                 total=0,
                 total_pages=0,
-                has_more=False
+                has_more=False,
+                unique_users=0
             )
+    
+    def _count_unique_users(self, messages: list[Message], filters: MessageFilter) -> int:
+        """
+        Cuenta el número de usuarios únicos que interactuaron
+        
+        Excluye el número del servicio (que puede estar en filters.numero_from o numero_to)
+        y cuenta solo los números de usuarios únicos.
+        
+        Args:
+            messages: Lista de mensajes a analizar
+            filters: Filtros aplicados (para identificar el número del servicio)
+            
+        Returns:
+            Número de usuarios únicos
+        """
+        if not messages:
+            return 0
+        
+        # Identificar el número del servicio
+        # El servicio puede estar en from o to dependiendo del filtro
+        service_numbers = set()
+        
+        # Si hay un filtro from_to, probablemente sea el servicio
+        # En el contexto de la app, el servicio es el que filtramos
+        if filters.numero_from:
+            service_numbers.add(filters.numero_from)
+        if filters.numero_to:
+            service_numbers.add(filters.numero_to)
+        
+        # Si no hay filtros específicos, intentar detectar el servicio
+        # (el que aparece más frecuentemente)
+        if not service_numbers:
+            from collections import Counter
+            all_numbers = [msg.from_number for msg in messages] + [msg.to_number for msg in messages]
+            number_counts = Counter(all_numbers)
+            if number_counts:
+                # El número más frecuente probablemente sea el servicio
+                most_common = number_counts.most_common(1)[0][0]
+                service_numbers.add(most_common)
+        
+        # Recolectar todos los números únicos, excluyendo los del servicio
+        user_numbers = set()
+        for msg in messages:
+            if msg.from_number not in service_numbers:
+                user_numbers.add(msg.from_number)
+            if msg.to_number not in service_numbers:
+                user_numbers.add(msg.to_number)
+        
+        return len(user_numbers)

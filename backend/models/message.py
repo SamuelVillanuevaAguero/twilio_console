@@ -139,6 +139,7 @@ class PaginatedResponse:
     total: int
     total_pages: int
     has_more: bool
+    unique_users: int = 0  # Número de usuarios únicos que interactuaron
     
     def to_dict(self) -> dict:
         """Convierte la respuesta a diccionario para JSON"""
@@ -148,5 +149,6 @@ class PaginatedResponse:
             "per_page": self.per_page,
             "total": self.total,
             "total_pages": self.total_pages,
-            "has_more": self.has_more
+            "has_more": self.has_more,
+            "unique_users": self.unique_users
         }
